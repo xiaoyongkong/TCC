@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import timeit
 from graph import Graph
 # import numba as nb
+import csv
 
 load_dotenv()
 
@@ -146,6 +147,48 @@ def main():
 
     hull_best.write(graph, f"best_{os.getenv('INITIAL_GRAPH')}")
     hull_time.write(graph, f"time_{os.getenv('INITIAL_GRAPH')}")
+
+
+def bulk():
+    first = True
+    for i in range(1, 5):
+        graphname = str(i).zfill(3)
+        graph = Graph(graphname)
+        start = timeit.default_timer()
+        hull_best, hull_time = optimize(graph, os.getenv('FLEXIBLE_BINARY_SEARCH') == 'True')
+        stop = timeit.default_timer()
+        exec_time = stop - start
+
+        hull_best.write(graph, f"best_{graphname}")
+        hull_time.write(graph, f"time_{graphname}")
+
+        dicts = {
+            'Graph': graphname, 
+            'Time': int(exec_time),
+            'Len': len(hull_best.initial_hull()),
+            'Alcance': len(hull_best),
+            'T': hull_best.time,
+            'Len(hulltime)': len(hull_time.initial_hull()),
+            'Alcance(hulltime)': len(hull_time),
+            'T(hulltime)': hull_time.time,
+            'INITIAL_GRAPH': os.getenv('INITIAL_GRAPH'), 
+            'CONTAMINANTS': os.getenv('CONTAMINANTS'),
+            'LENGTH_SAMPLE': os.getenv('LENGTH_SAMPLE'),
+            'STOP_ON_FIRST_BEST_SAMPLE': os.getenv('STOP_ON_FIRST_BEST_SAMPLE'),
+            'FLEXIBLE_BINARY_SEARCH': os.getenv('FLEXIBLE_BINARY_SEARCH'),
+            'WITH_WEIGHT': os.getenv('WITH_WEIGHT'),
+            'VELOCITY': os.getenv('VELOCITY'),
+            'PARALLEL': os.getenv('PARALLEL'),
+            'MAX_PARALLEL': os.getenv('MAX_PARALLEL'),
+            'ONE_IN': os.getenv('ONE_IN')
+        }
+        with open(f"outputs/results.csv", 'a', newline='') as output_file:
+            dict_writer = csv.DictWriter(output_file, dicts.keys())
+            if first:
+                dict_writer.writeheader()
+            # dict_writer.writerows(dicts)
+            dict_writer.writerow(dicts)
+            first = False
 
 
 if __name__ == '__main__':
