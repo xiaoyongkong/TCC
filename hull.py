@@ -61,7 +61,7 @@ class Hull:
             else:
                 sum_indexes_weights = sum(self.weights[i] for i in indexes)
                 sum_non_indexes = sum(weight for weight in self.weights)
-                remain = (((4 * sum_non_indexes) - sum_indexes_weights) + len(indexes)) // len(indexes)
+                remain = (((int(os.getenv('ONE_IN')) * sum_non_indexes) - sum_indexes_weights) + len(indexes)) // len(indexes)
                 for i in indexes:
                     self.weights[i] += remain
             biggest = max(self.weights)
