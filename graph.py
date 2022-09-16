@@ -32,12 +32,17 @@ class Graph:
     #         dict_writer.writerows(dicts)
 
     def read(self, path):
-        with open(f"inputs/{path}.txt") as f:
+        self.path = f"inputs/{path}.{os.getenv('FILE_INPUT_EXTENSION')}"
+        with open(self.path) as f:
             while True:
                 row = f.readline()
                 if not row:
                     break
                 self.nedges += 1
+                if "#" in row:
+                    print('encontrado um #')
+                    self.reset_graph()
+                    continue
                 v1, v2 = int(row.split()[0]), int(row.split()[1])
                 self.vmin = min(self.vmin, v1, v2)
                 self.vmax = max(self.vmax, v1, v2)
