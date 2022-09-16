@@ -5,14 +5,17 @@ from hull import Hull
 
 class Graph:
     def __init__(self, path):
-        self.graph = {}
-        self.nedges = 0
-        self.vmax = 0
-        self.vmin = math.inf
+        self.reset_graph()
         self.avl_hull = None
         self.mnd_hull = None
         self.read(path)
         # self.write_graph(path)
+
+    def reset_graph(self):
+        self.graph = {}
+        self.nedges = 0
+        self.vmax = 0
+        self.vmin = math.inf
 
     # def write_graph(self, path):
     #     dicts = []
