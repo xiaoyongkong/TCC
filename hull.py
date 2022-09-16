@@ -65,8 +65,10 @@ class Hull:
                 for i in indexes:
                     self.weights[i] += remain
             biggest = max(self.weights)
-            if biggest > 1000000: # normalize weights
-                self.weights = [(weight * 1000000) / biggest for weight in self.weights]
+            maximum = 1000000
+            minimum = 1/10000000000
+            if biggest > maximum: # normalize weights
+                self.weights = [max(weight * maximum / biggest, minimum) for weight in self.weights]
 
     def evolve(self, array):
         if array:
