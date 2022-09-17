@@ -6,9 +6,11 @@ from hull import Hull
 class Graph:
     def __init__(self, path):
         self.reset_graph()
+        self.read(path)
         self.avl_hull = None
         self.mnd_hull = None
-        self.read(path)
+        self.mandatory_hull() # set mandatory hull previously
+        self.available_hull() # set available hull previously
         # self.write_graph(path)
 
     def reset_graph(self):
