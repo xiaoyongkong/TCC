@@ -1,66 +1,38 @@
 import math
-import threading
-import queue
 import os
 from dotenv import load_dotenv
 import timeit
 from graph import Graph
-# import numba as nb
 import csv
+import ray
+# from ray.util import inspect_serializability
+
 
 load_dotenv()
 
 
-# class Worker(multiprocessing.Process):
-#     def __init__(self, graph, n, q, lock):
-#         super(Worker, self).__init__()
-#         self.graph = graph
-#         self.n = n
-#         self.q = q
-#         self.lock = lock
-#         
-# 
-#     def run(self):
-#         random_hull, indexes = self.graph.available_hull().random_subset(self.n, os.getenv('WITH_WEIGHT') == 'True', self.lock)
-#         hull = self.graph.mandatory_hull() + random_hull
-#         hull = self.graph.hull_algorithm(hull)
-#         self.q.put((hull, indexes))
-
-
-# @nb.jit(forceobj=True, nogil = True)
-# def worker(graph, n, q):
-#     random_hull, indexes = graph.available_hull().random_subset(n, os.getenv('WITH_WEIGHT') == 'True')
-#     hull = graph.mandatory_hull() + random_hull
-#     hull = graph.hull_algorithm(hull)
-#     q.put((hull, indexes))
-
+@ray.remote
+def worker(graph, n):
+    random_hull, indexes = graph.available_hull().random_subset(n, os.getenv('WITH_WEIGHT') == 'True')
+    hull = graph.mandatory_hull() + random_hull
+    hull = graph.hull_algorithm(hull)
+    return (hull, indexes)
 
 def run_samples_parallel(graph, n):
     first = True
-    q = queue.Queue()
-    nthreads = 0
-    cnt = 0
-    threads = []
-    while cnt < int(os.getenv('LENGTH_SAMPLE')):
-        remain = int(os.getenv('LENGTH_SAMPLE')) - cnt # para terminar
-        if nthreads < remain and nthreads < int(os.getenv('MAX_PARALLEL')): # and remain >= int(os.getenv('MAX_PARALLEL')):
-            nthreads += 1
-            thread = threading.Thread(target=worker, args=(graph, n, q))
-            thread.daemon = True
-            thread.start()
-            threads.append(thread)
-        else:
-            hull, idx = q.get()
-            nthreads -= 1
-            if first or (len(hull) > len(hull_best)) or (len(hull) == len(hull_best) and hull.time < hull_best.time):
-                if not first and os.getenv('WITH_WEIGHT') == 'True':
-                    graph.available_hull().update_weights(indexes, True)
-                first = False
-                hull_best = hull
-                indexes = idx
-            if os.getenv('STOP_ON_FIRST_BEST_SAMPLE') == 'True' and reach_threshold(hull, len(graph)):
-                break
-            cnt += 1
+    # inspect_serializability(graph, name="graph") # to inspect serialization of ray
+    # inspect_serializability(worker, name="worker") # to inspect serialization of ray
+    for hull, idx in ray.get([worker.remote(graph, n) for _ in range(0, int(os.getenv('LENGTH_SAMPLE')))]):
+        if first or (len(hull) > len(hull_best)) or (len(hull) == len(hull_best) and hull.time < hull_best.time):
+            # don't make sense in parallel scenario
+            # if not first and os.getenv('WITH_WEIGHT') == 'True':
+            #     graph.available_hull().update_weights(indexes, True)
+            first = False
+            hull_best = hull
+            indexes = idx
+        # don't make sense in parallel scenario
+        # if os.getenv('STOP_ON_FIRST_BEST_SAMPLE') == 'True' and reach_threshold(hull, len(graph)):
+        #     break
     return hull_best, indexes
 
 
@@ -119,13 +91,13 @@ def optimize(graph, flexible = False):
             n = (maximum + minimum) // 2
         else:
             minimum = n
-            n = n + math.ceil((maximum - minimum) / 2) # maximum - max(math.ceil((maximum - n) / 2), 1) # (maximum - n) // 2
+            n = n + math.ceil((maximum - minimum) / 2)
         if maximum - minimum <= 1:
             break
     return hull_best, hull_time
 
 
-def main():
+def exec():
     graph = Graph(f"{os.getenv('INITIAL_GRAPH')}")
     start = timeit.default_timer()
 
@@ -149,7 +121,7 @@ def main():
     hull_time.write(graph, f"time_{os.getenv('INITIAL_GRAPH')}")
 
 
-def bulk():
+def bulkexec():
     first = True
     for i in range(1, 5):
         graphname = str(i).zfill(3)
@@ -186,10 +158,14 @@ def bulk():
             dict_writer = csv.DictWriter(output_file, dicts.keys())
             if first:
                 dict_writer.writeheader()
-            # dict_writer.writerows(dicts)
             dict_writer.writerow(dicts)
             first = False
 
 
 if __name__ == '__main__':
-    main()
+    if os.getenv('PARALLEL') == 'True':
+        print(f"numero de cpus detectados pelo ray: {ray._private.utils.get_num_cpus()}")
+        # ray.init(num_cpus=12) # to increment cpu usage on ray
+
+    exec()
+    # bulkexec()
