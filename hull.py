@@ -2,7 +2,6 @@ import os
 import random
 import math
 import heapq
-import threading
 import networkx as nx
 
 class Hull:
@@ -11,7 +10,6 @@ class Hull:
         self.hull = []
         self.weights = []
         self.time = 0
-        self.lock = threading.Lock()
         self.times = {} # tempo em houve a entrada do vertice
         self.times[self.time] = array or []
         for v in array or []:
@@ -41,9 +39,8 @@ class Hull:
 
     def weighted_selection_without_replacement(self, n):
         # https://colab.research.google.com/drive/14Vnp-5xRHLZYE_WTczhpoMW2KdC6Cnvs#scrollTo=wEwWxLMKbpZn
-        with self.lock:
-            elt = [(math.log(random.random()) / self.weights[i], i) for i in range(len(self.weights))]
-            return [x[1] for x in heapq.nlargest(n, elt)]
+        elt = [(math.log(random.random()) / self.weights[i], i) for i in range(len(self.weights))]
+        return [x[1] for x in heapq.nlargest(n, elt)]
 
     def random_subset(self, n, with_weight = False):
         if with_weight:
@@ -54,21 +51,20 @@ class Hull:
         return Hull(sample), indexes
 
     def update_weights(self, indexes, internal = False):
-        with self.lock:
-            if internal:
-                for i in indexes:
-                    self.weights[i] *= int(os.getenv('VELOCITY')) 
-            else:
-                sum_indexes_weights = sum(self.weights[i] for i in indexes)
-                sum_non_indexes = sum(weight for weight in self.weights)
-                remain = (((int(os.getenv('ONE_IN')) * sum_non_indexes) - sum_indexes_weights) + len(indexes)) // len(indexes)
-                for i in indexes:
-                    self.weights[i] += remain
-            biggest = max(self.weights)
-            maximum = 1000000
-            minimum = 1/10000000000
-            if biggest > maximum: # normalize weights
-                self.weights = [max(weight * maximum / biggest, minimum) for weight in self.weights]
+        if internal:
+            for i in indexes:
+                self.weights[i] *= int(os.getenv('VELOCITY')) 
+        else:
+            sum_indexes_weights = sum(self.weights[i] for i in indexes)
+            sum_non_indexes = sum(weight for weight in self.weights)
+            remain = (((int(os.getenv('ONE_IN')) * sum_non_indexes) - sum_indexes_weights) + len(indexes)) // len(indexes)
+            for i in indexes:
+                self.weights[i] += remain
+        biggest = max(self.weights)
+        maximum = 1000000
+        minimum = 1/10000000000
+        if biggest > maximum: # normalize weights
+            self.weights = [max(weight * maximum / biggest, minimum) for weight in self.weights]
 
     def evolve(self, array):
         if array:
