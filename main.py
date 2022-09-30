@@ -5,6 +5,7 @@ import timeit
 from graph import Graph
 import csv
 import ray
+import itertools
 # from ray.util import inspect_serializability
 
 
@@ -122,10 +123,44 @@ def exec():
 
 
 def bulkexec():
+    def unzip(collection):
+        return list(zip(*enumerate(collection)))
+
     first = True
-    for i in range(1, 5):
-        graphname = str(i).zfill(3)
-        graph = Graph(graphname)
+
+    files_idx, files = unzip(range(0, 60))
+    lens_idx, lens = unzip([10, 50, 100, 500])
+    one_in_idx, one_in = unzip([10, 100])
+    velocities_idx, velocities = unzip([1, 2])
+    stop_on_first_best_samples_idx, stop_on_first_best_samples = unzip(["True", "False"])
+
+    for comb in itertools.product(files_idx, lens_idx, one_in_idx, velocities_idx, stop_on_first_best_samples_idx):
+        os.environ["INITIAL_GRAPH"]=str(files[comb[0]]).zfill(3)
+        os.environ["LENGTH_SAMPLE"]=str(lens[comb[1]])
+        os.environ["ONE_IN"] = str(one_in[comb[2]])
+        os.environ["VELOCITY"]= str(velocities[comb[3]])
+        os.environ["STOP_ON_FIRST_BEST_SAMPLE"]=str(stop_on_first_best_samples[comb[4]])
+
+        print(f"INITIAL_GRAPH: {os.environ['INITIAL_GRAPH']}")
+        print(f"LENGTH_SAMPLE: {os.environ['LENGTH_SAMPLE']}")
+        print(f"ONE_IN: {os.environ['ONE_IN']}")
+        print(f"VELOCITY: {os.environ['VELOCITY']}")
+        print(f"STOP_ON_FIRST_BEST_SAMPLE: {os.environ['STOP_ON_FIRST_BEST_SAMPLE']}")
+
+        # default following:
+        os.environ["CONTAMINANTS"]="2"
+        os.environ["FLEXIBLE_BINARY_SEARCH"]="True"
+        os.environ["WITH_WEIGHT"]="True"
+        os.environ["PARALLEL"]="False"
+        os.environ["MAX_PARALLEL"] = "8"
+        os.environ["FILE_INPUT_EXTENSION"] = "tgf"
+
+        graphname = os.environ["INITIAL_GRAPH"]
+        try:
+            graph = Graph(graphname)
+        except FileNotFoundError as err:
+            print("file not found: ", err)
+            continue
         start = timeit.default_timer()
         hull_best, hull_time = optimize(graph, os.getenv('FLEXIBLE_BINARY_SEARCH') == 'True')
         stop = timeit.default_timer()
@@ -135,24 +170,27 @@ def bulkexec():
         hull_time.write(graph, f"time_{graphname}")
 
         dicts = {
-            'Graph': graphname, 
-            'Time': int(exec_time),
-            'Len': len(hull_best.initial_hull()),
-            'Alcance': len(hull_best),
-            'T': hull_best.time,
-            'Len(hulltime)': len(hull_time.initial_hull()),
-            'Alcance(hulltime)': len(hull_time),
-            'T(hulltime)': hull_time.time,
-            'INITIAL_GRAPH': os.getenv('INITIAL_GRAPH'), 
-            'CONTAMINANTS': os.getenv('CONTAMINANTS'),
+            'id': graphname, 
+            'solucao_encontrada': len(hull_best.initial_hull()),
+            'vmin': graph.vmin,
+            'vmax': graph.vmax,
+            'tamanho_grafo': len(graph),
+            'tempo_execucao': int(exec_time),
+            'tempo_cotaminacao': hull_best.time,
             'LENGTH_SAMPLE': os.getenv('LENGTH_SAMPLE'),
-            'STOP_ON_FIRST_BEST_SAMPLE': os.getenv('STOP_ON_FIRST_BEST_SAMPLE'),
-            'FLEXIBLE_BINARY_SEARCH': os.getenv('FLEXIBLE_BINARY_SEARCH'),
-            'WITH_WEIGHT': os.getenv('WITH_WEIGHT'),
+            'ONE_IN': os.getenv('ONE_IN'),
             'VELOCITY': os.getenv('VELOCITY'),
-            'PARALLEL': os.getenv('PARALLEL'),
-            'MAX_PARALLEL': os.getenv('MAX_PARALLEL'),
-            'ONE_IN': os.getenv('ONE_IN')
+            'STOP_ON_FIRST_BEST_SAMPLE': os.getenv('STOP_ON_FIRST_BEST_SAMPLE')
+            # 'Alcance': len(hull_best),
+            # 'Len(hulltime)': len(hull_time.initial_hull()),
+            # 'Alcance(hulltime)': len(hull_time),
+            # 'T(hulltime)': hull_time.time,
+            # 'INITIAL_GRAPH': os.getenv('INITIAL_GRAPH'), 
+            # 'CONTAMINANTS': os.getenv('CONTAMINANTS'),
+            # 'FLEXIBLE_BINARY_SEARCH': os.getenv('FLEXIBLE_BINARY_SEARCH'),
+            # 'WITH_WEIGHT': os.getenv('WITH_WEIGHT'),
+            # 'PARALLEL': os.getenv('PARALLEL'),
+            # 'MAX_PARALLEL': os.getenv('MAX_PARALLEL'),
         }
         with open(f"outputs/results.csv", 'a', newline='') as output_file:
             dict_writer = csv.DictWriter(output_file, dicts.keys())
