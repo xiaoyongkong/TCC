@@ -53,7 +53,7 @@ class Graph:
     def __len__(self):
         # o numero de vertices do grafo
         # obs.: vertices nao encontrados na entrada (entre vmin e vmax) sao considerados como vertices isolados de grau 0
-        return self.vmax
+        return self.vmax - self.vmin + 1
 
     def add_on_adjacenty_list_undirected(self, u, w):
         self.add_on_adjacency_list(u, w)
