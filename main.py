@@ -65,6 +65,7 @@ def optimize(graph, flexible = False):
     n = math.ceil(maximum / 2)
     first_hull_time = True
     first_hull = True
+    lastrun = 0
     while True:
         print('minimum: {}, maximum: {}, n: {}'.format(minimum, maximum, n))
         
@@ -90,10 +91,16 @@ def optimize(graph, flexible = False):
                     minimum = 1
             maximum = n
             n = (maximum + minimum) // 2
+            if n == minimum or lastrun == 1:
+                lastrun += 1
         else:
             minimum = n
             n = n + math.ceil((maximum - minimum) / 2)
-        if maximum - minimum <= 1:
+            if n == maximum or lastrun == 1:
+                lastrun += 1
+        # if maximum - minimum <= 1:
+        #     break
+        if lastrun == 2:
             break
     return hull_best, hull_time
 
