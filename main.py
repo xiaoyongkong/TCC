@@ -162,9 +162,8 @@ def bulkexec():
         os.environ["MAX_PARALLEL"] = "8"
         os.environ["FILE_INPUT_EXTENSION"] = "tgf"
 
-        graphname = os.environ["INITIAL_GRAPH"]
         try:
-            graph = Graph(graphname)
+            graph = Graph(os.environ['INITIAL_GRAPH'])
         except FileNotFoundError as err:
             print("file not found: ", err)
             continue
@@ -173,17 +172,17 @@ def bulkexec():
         stop = timeit.default_timer()
         exec_time = stop - start
 
-        hull_best.write(graph, f"best_{graphname}")
-        hull_time.write(graph, f"time_{graphname}")
+        hull_best.write(graph, f"best_{os.environ['INITIAL_GRAPH']}")
+        hull_time.write(graph, f"time_{os.environ['INITIAL_GRAPH']}")
 
         dicts = {
-            'id': graphname, 
-            'solucao_encontrada': len(hull_best.initial_hull()),
+            'grafo': f"{os.environ['INITIAL_GRAPH']}.{os.environ['FILE_INPUT_EXTENSION']}", 
             'vmin': graph.vmin,
             'vmax': graph.vmax,
             'tamanho_grafo': len(graph),
-            'tempo_execucao': int(exec_time),
+            'tam_menor_fecho_inicial': len(hull_best.initial_hull()),
             'tempo_cotaminacao': hull_best.time,
+            'tempo_execucao': int(exec_time),
             'LENGTH_SAMPLE': os.getenv('LENGTH_SAMPLE'),
             'ONE_IN': os.getenv('ONE_IN'),
             'VELOCITY': os.getenv('VELOCITY'),
@@ -198,6 +197,7 @@ def bulkexec():
             # 'WITH_WEIGHT': os.getenv('WITH_WEIGHT'),
             # 'PARALLEL': os.getenv('PARALLEL'),
             # 'MAX_PARALLEL': os.getenv('MAX_PARALLEL'),
+            # 'FILE_INPUT_EXTENSION': os.getenv('FILE_INPUT_EXTENSION'),
         }
         with open(f"outputs/results.csv", 'a', newline='') as output_file:
             dict_writer = csv.DictWriter(output_file, dicts.keys())
@@ -212,5 +212,5 @@ if __name__ == '__main__':
         print(f"numero de cpus detectados pelo ray: {ray._private.utils.get_num_cpus()}")
         # ray.init(num_cpus=12) # to increment cpu usage on ray
 
-    exec()
-    # bulkexec()
+    # exec()
+    bulkexec()
