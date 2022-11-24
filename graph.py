@@ -35,6 +35,7 @@ class Graph:
 
     def read(self, path):
         self.path = f"inputs/{path}.{os.getenv('FILE_INPUT_EXTENSION')}"
+        print("Grafo:", self.path)
         with open(self.path) as f:
             while True:
                 row = f.readline()
@@ -49,6 +50,9 @@ class Graph:
                 self.vmin = min(self.vmin, v1, v2)
                 self.vmax = max(self.vmax, v1, v2)
                 self.add_on_adjacenty_list_undirected(v1, v2)
+        print("Vmin:", self.vmin)
+        print("Vmax:", self.vmax)
+        print("Tam:", len(self))
 
     def __len__(self):
         # o numero de vertices do grafo
