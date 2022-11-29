@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import timeit
 from graph import Graph
 import csv
-import ray
+# import ray
 import itertools
 # from ray.util import inspect_serializability
 
@@ -12,30 +12,29 @@ import itertools
 load_dotenv()
 
 
-@ray.remote
-def worker(graph, n):
-    random_hull, indexes = graph.available_hull().random_subset(n, os.getenv('WITH_WEIGHT') == 'True')
-    hull = graph.mandatory_hull() + random_hull
-    hull = graph.hull_algorithm(hull)
-    return (hull, indexes)
+# @ray.remote
+# def worker(graph, n):
+#     random_hull, indexes = graph.available_hull().random_subset(n, os.getenv('WITH_WEIGHT') == 'True')
+#     hull = graph.mandatory_hull() + random_hull
+#     hull = graph.hull_algorithm(hull)
+#     return (hull, indexes)
 
-def run_samples_parallel(graph, n):
-    first = True
-    # inspect_serializability(graph, name="graph") # to inspect serialization of ray
-    # inspect_serializability(worker, name="worker") # to inspect serialization of ray
-    for hull, idx in ray.get([worker.remote(graph, n) for _ in range(0, int(os.getenv('LENGTH_SAMPLE')))]):
-        if first or (len(hull) > len(hull_best)) or (len(hull) == len(hull_best) and hull.time < hull_best.time):
-            # don't make sense in parallel scenario
-            # if not first and os.getenv('WITH_WEIGHT') == 'True':
-            #     graph.available_hull().update_weights(indexes, True)
-            first = False
-            hull_best = hull
-            indexes = idx
-        # don't make sense in parallel scenario
-        # if os.getenv('STOP_ON_FIRST_BEST_SAMPLE') == 'True' and reach_threshold(hull, len(graph)):
-        #     break
-    return hull_best, indexes
-
+# def run_samples_parallel(graph, n):
+#     first = True
+#     # inspect_serializability(graph, name="graph") # to inspect serialization of ray
+#     # inspect_serializability(worker, name="worker") # to inspect serialization of ray
+#     for hull, idx in ray.get([worker.remote(graph, n) for _ in range(0, int(os.getenv('LENGTH_SAMPLE')))]):
+#         if first or (len(hull) > len(hull_best)) or (len(hull) == len(hull_best) and hull.time < hull_best.time):
+#           # don't make sense in parallel scenario
+#           # if not first and os.getenv('WITH_WEIGHT') == 'True':
+#           #     graph.available_hull().update_weights(indexes, True)
+#           first = False
+#           hull_best = hull
+#           indexes = idx
+#         # don't make sense in parallel scenario
+#         # if os.getenv('STOP_ON_FIRST_BEST_SAMPLE') == 'True' and reach_threshold(hull, len(graph)):
+#         #     break
+#     return hull_best, indexes
 
 def run_samples(graph, n):
     first = True
