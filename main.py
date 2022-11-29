@@ -85,6 +85,10 @@ def optimize(graph, flexible = False):
                 print("tamanho do MELHOR FECHO INICIAL: {}".format(len(hull_best.initial_hull())))
                 print("numero de vertices alcancados pelo MELHOR FECHO INICIAL: {}".format(len(hull_best)))
                 print("tempo do MELHOR FECHO INICIAL: {}".format(hull_best.time))
+                print(f"grafo: {os.environ['INITIAL_GRAPH']}.{os.environ['FILE_INPUT_EXTENSION']}")
+                print(f"vmin: {graph.vmin}")
+                print(f"vmax: {graph.vmax}")
+                print(f"tamanho do grafo: {len(graph)}")
                 print()
                 if flexible:
                     minimum = 1
