@@ -28,6 +28,7 @@ As variáveis estão definidas no arquivo `.env`
 - **FLEXIBLE_BINARY_SEARCH**: se definido como `True` irá realizar o reset do tamanho do conjunto mínimo para 1 sempre que encontrar uma melhor solução na busca binária. É equivalente a rodar uma nova busca binária sempre que encontrar uma nova solução melhor.
 - **WITH_WEIGHT**: se definido como `True` fará a seleção do conjunto de vértices pertencente ao fecho inicial aleatório baseado em pesos.
 - **VELOCITY**: multiplicador do peso de um vértice ao encontrar uma nova solução na fase de geração de conjuntos aleatórios.
+- **ONE_IN**: inverso da probabilidade de se escolher um conjunto igual na amostragem sem repetição por pesos. Por exemplo, se for 100, significa que na amostragem existe 1 chance em 100 de se obter um fecho convexo igual ao já encontrado.
 
 # Formatação de Arquivos
 
