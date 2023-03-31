@@ -138,11 +138,11 @@ def bulkexec():
 
     first = True
 
-    files_idx, files = unzip(range(0, 60))
-    lens_idx, lens = unzip([10, 50, 100, 500])
-    one_in_idx, one_in = unzip([10, 100])
-    velocities_idx, velocities = unzip([1, 2])
-    stop_on_first_best_samples_idx, stop_on_first_best_samples = unzip(["True", "False"])
+    files_idx, files = unzip(range(7, 8))
+    lens_idx, lens = unzip([500]) # unzip([10, 50, 100, 500])
+    one_in_idx, one_in = unzip([10]) # unzip([10, 100])
+    velocities_idx, velocities = unzip([1]) # unzip([1, 2])
+    stop_on_first_best_samples_idx, stop_on_first_best_samples = unzip(["False"]) # unzip(["True", "False"])
 
     for comb in itertools.product(files_idx, lens_idx, one_in_idx, velocities_idx, stop_on_first_best_samples_idx):
         os.environ["INITIAL_GRAPH"]=str(files[comb[0]]).zfill(3)
@@ -151,6 +151,7 @@ def bulkexec():
         os.environ["VELOCITY"]= str(velocities[comb[3]])
         os.environ["STOP_ON_FIRST_BEST_SAMPLE"]=str(stop_on_first_best_samples[comb[4]])
 
+        print(f"\n==========================================")
         print(f"INITIAL_GRAPH: {os.environ['INITIAL_GRAPH']}")
         print(f"LENGTH_SAMPLE: {os.environ['LENGTH_SAMPLE']}")
         print(f"ONE_IN: {os.environ['ONE_IN']}")
